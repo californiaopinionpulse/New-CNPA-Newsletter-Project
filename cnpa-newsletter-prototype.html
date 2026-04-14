@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CNPA Newsletter Prototype</title>
+  <style>
+    :root {
+      --cnpa-blue: #0357a3;
+      --cnpa-blue-deep: #0d3765;
+      --cnpa-sky: #e9f4ff;
+      --cnpa-ink: #11283f;
+      --cnpa-slate: #56708a;
+      --cnpa-line: #d6e4f1;
+      --cnpa-paper: #f7fbff;
+      --cnpa-white: #ffffff;
+      --cnpa-gold: #d7ad45;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top left, rgba(3, 87, 163, 0.18), transparent 35%),
+        linear-gradient(180deg, #eef6fd 0%, #f8fbfe 28%, #f6f9fc 100%);
+      color: var(--cnpa-ink);
+      font-family: Georgia, "Times New Roman", serif;
+      line-height: 1.5;
+      padding: 24px 16px 56px;
+    }
+
+    .frame {
+      max-width: 780px;
+      margin: 0 auto;
+      background: var(--cnpa-white);
+      border: 1px solid rgba(3, 87, 163, 0.12);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(17, 40, 63, 0.08);
+    }
+
+    .hero {
+      position: relative;
+      padding: 28px 28px 32px;
+      background:
+        linear-gradient(135deg, rgba(3, 87, 163, 0.98), rgba(13, 55, 101, 0.94)),
+        linear-gradient(180deg, #0357a3, #0d3765);
+      color: var(--cnpa-white);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -120px -120px auto;
+      width: 280px;
+      height: 280px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .brand-mark {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 6px;
+      backdrop-filter: blur(6px);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    }
+
+    .brand-mark img {
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 1;
+    }
+
+    .brand-copy p,
+    .brand-copy h1 {
+      margin: 0;
+    }
+
+    .eyebrow {
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      font-size: 11px;
+      opacity: 0.82;
+      margin-bottom: 8px;
+    }
+
+    .hero h1 {
+      font-size: clamp(28px, 4vw, 40px);
+      line-height: 1.03;
+      margin-top: 10px;
+      max-width: 540px;
+    }
+
+    .hero-summary {
+      margin-top: 18px;
+      max-width: 610px;
+      font-size: 18px;
+      color: rgba(255, 255, 255, 0.9);
+    }
+
+    .hero-note {
+      margin-top: 20px;
+      display: inline-block;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 999px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .content {
+      padding: 28px;
+    }
+
+    .section-label {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.14em;
+      color: var(--cnpa-blue);
+      margin: 0 0 10px;
+      font-weight: 700;
+    }
+
+    .intro {
+      margin: 0 0 28px;
+      font-size: 18px;
+      color: var(--cnpa-ink);
+    }
+
+    .intro-standfirst {
+      margin: 0 0 22px;
+      padding: 16px 18px;
+      border-left: 4px solid var(--cnpa-gold);
+      background: #fdfaf2;
+      border-radius: 14px;
+      font-size: 16px;
+      color: #384e63;
+    }
+
+    .pulse {
+      margin-bottom: 28px;
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .pulse-card {
+      background: linear-gradient(180deg, var(--cnpa-paper), #ffffff);
+      border: 1px solid var(--cnpa-line);
+      border-radius: 20px;
+      padding: 18px;
+    }
+
+    .pulse-card strong {
+      display: block;
+      color: var(--cnpa-blue-deep);
+      font-size: 13px;
+      font-family: Arial, Helvetica, sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .pulse-card span {
+      display: block;
+      font-size: 17px;
+      line-height: 1.35;
+    }
+
+    .list {
+      display: grid;
+      gap: 18px;
+    }
+
+    .section-block {
+      margin-top: 34px;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+
+    .section-heading h2 {
+      margin: 0;
+      color: var(--cnpa-blue-deep);
+      font-size: 26px;
+      line-height: 1.1;
+    }
+
+    .section-heading span {
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--cnpa-slate);
+      font-size: 13px;
+    }
+
+    .story {
+      border: 1px solid var(--cnpa-line);
+      border-radius: 22px;
+      padding: 22px;
+      background: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .story::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: 6px;
+      background: linear-gradient(180deg, var(--cnpa-blue), var(--cnpa-gold));
+    }
+
+    .meta {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cnpa-slate);
+      margin-bottom: 10px;
+      padding-left: 12px;
+    }
+
+    .story h2 {
+      margin: 0 0 10px;
+      padding-left: 12px;
+      font-size: 27px;
+      line-height: 1.15;
+      color: var(--cnpa-blue-deep);
+    }
+
+    .story p {
+      margin: 0;
+      padding-left: 12px;
+      font-size: 17px;
+      color: var(--cnpa-ink);
+    }
+
+    .story-footer {
+      margin-top: 16px;
+      padding-left: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .story-footer a {
+      display: inline-block;
+      color: var(--cnpa-blue);
+      text-decoration: none;
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 700;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--cnpa-blue-deep);
+      background: var(--cnpa-sky);
+      border: 1px solid rgba(3, 87, 163, 0.12);
+      border-radius: 999px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .story-grid {
+      display: grid;
+      gap: 18px;
+      grid-template-columns: 1.25fr 1fr;
+    }
+
+    .briefs {
+      display: grid;
+      gap: 12px;
+    }
+
+    .brief {
+      border: 1px solid var(--cnpa-line);
+      border-radius: 18px;
+      padding: 16px 18px;
+      background: linear-gradient(180deg, #ffffff, #f8fbfe);
+    }
+
+    .brief h3 {
+      margin: 6px 0 8px;
+      font-size: 20px;
+      color: var(--cnpa-blue-deep);
+      line-height: 1.2;
+    }
+
+    .brief p {
+      margin: 0;
+      font-size: 15px;
+      color: var(--cnpa-ink);
+    }
+
+    .brief .meta {
+      margin-bottom: 0;
+      padding-left: 0;
+    }
+
+    .quick-scan {
+      border: 1px solid var(--cnpa-line);
+      border-radius: 22px;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .scan-row {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 16px;
+      padding: 16px 18px;
+      border-top: 1px solid var(--cnpa-line);
+    }
+
+    .scan-row:first-child {
+      border-top: 0;
+    }
+
+    .scan-pub {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--cnpa-blue);
+      font-weight: 700;
+    }
+
+    .scan-copy strong {
+      display: block;
+      color: var(--cnpa-blue-deep);
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .scan-copy p {
+      margin: 0;
+      color: var(--cnpa-ink);
+      font-size: 15px;
+    }
+
+    .footer {
+      padding: 24px 28px 30px;
+      background: linear-gradient(180deg, #f8fbfe, #edf5fb);
+      border-top: 1px solid var(--cnpa-line);
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--cnpa-slate);
+      font-size: 13px;
+    }
+
+    .footer strong {
+      color: var(--cnpa-blue-deep);
+    }
+
+    @media (max-width: 720px) {
+      .hero,
+      .content,
+      .footer {
+        padding-left: 20px;
+        padding-right: 20px;
+      }
+
+      .pulse {
+        grid-template-columns: 1fr;
+      }
+
+      .story-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .scan-row {
+        grid-template-columns: 1fr;
+        gap: 8px;
+      }
+
+      .brand {
+        align-items: flex-start;
+      }
+
+      .brand-mark {
+        width: 56px;
+        height: 56px;
+      }
+
+      .story h2 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="frame">
+    <section class="hero">
+      <div class="brand">
+        <div class="brand-mark">
+          <img src="CNPA logo copy.png" alt="CNPA logo mark">
+        </div>
+        <div class="brand-copy">
+          <p class="eyebrow">California News Publishers Association</p>
+        </div>
+      </div>
+      <h1>California Opinion Pulse</h1>
+      <p class="hero-summary">A prototype weekly digest of California opinion, editorials, community voices and letters from CNPA member publications.</p>
+      <div class="hero-note">Sample subject line: What California communities are saying this week</div>
+    </section>
+
+    <section class="content">
+      <p class="section-label">Lead Note</p>
+      <p class="intro">Across California this week, opinion writers and community voices returned again and again to three themes: public trust, affordability, and the gap between statewide policy and local lived experience. From Bay Area neighborhood fights to Central Valley civic frustration and Southern California calls for accountability, the message is consistent: Sacramento debates land differently when filtered through hometown editorial pages.</p>
+      <p class="intro-standfirst">This mockup shows how a live issue could read once the workflow is automated. Headlines, author names, publication names, dates, summaries and links would all be pulled from RSS or monitored opinion pages, then lightly edited into a statewide briefing format.</p>
+
+      <p class="section-label">Statewide Pulse</p>
+      <div class="pulse">
+        <div class="pulse-card">
+          <strong>Affordability</strong>
+          <span>Housing pressure, utility costs and economic strain are driving much of the commentary.</span>
+        </div>
+        <div class="pulse-card">
+          <strong>Accountability</strong>
+          <span>Letters and columns are pressing local officials to explain decisions more clearly.</span>
+        </div>
+        <div class="pulse-card">
+          <strong>Community Voice</strong>
+          <span>Neighborhood-level perspectives remain a powerful signal of public mood.</span>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">
+          <h2>Top Lines</h2>
+          <span>4 stories most likely to shape Sacramento conversation this week</span>
+        </div>
+        <div class="story-grid">
+          <article class="story">
+            <div class="meta">Los Angeles Times • Opinion • Columnist Name • April 12, 2026</div>
+            <h2>How a local affordability fight becomes a statewide policy warning sign</h2>
+            <p>A lead item like this would anchor the issue with one high-profile statewide take. The summary would explain why the argument matters beyond one city or one vote, giving Capitol readers the larger signal behind the column.</p>
+            <div class="story-footer">
+              <span class="tag">Housing & affordability</span>
+              <a href="#">Read article</a>
+            </div>
+          </article>
+
+          <div class="briefs">
+            <article class="brief">
+              <div class="meta">The Sacramento Bee • Editorial Board • April 12, 2026</div>
+              <h3>A Sacramento editorial pushes lawmakers to match rhetoric with implementation</h3>
+              <p>Shorter summary format for a second-tier but still high-importance item.</p>
+            </article>
+            <article class="brief">
+              <div class="meta">San Francisco Chronicle • Opinion • Guest Commentary • April 12, 2026</div>
+              <h3>Bay Area perspective on trust, transit and who public investment really reaches</h3>
+              <p>This space works well for regional voices that still carry statewide implications.</p>
+            </article>
+            <article class="brief">
+              <div class="meta">The Mercury News • Opinion • Columnist Name • April 12, 2026</div>
+              <h3>BANG-managed Bay Area coverage adds Silicon Valley and East Bay sentiment</h3>
+              <p>Once BANG paths are finalized, these items can slot in naturally beside direct-source publications.</p>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">
+          <h2>Community Voices</h2>
+          <span>Local perspective, civic frustration, neighborhood-level response</span>
+        </div>
+        <div class="list">
+          <article class="story">
+            <div class="meta">Voice of OC • Community Opinion • Author Name • April 12, 2026</div>
+            <h2>Local government debate framed through a community-opinion lens</h2>
+            <p>This section is where the newsletter becomes distinct from a normal editorial roundup. Rather than just collecting big-city editorial boards, it surfaces what communities, advocates and local writers are saying in their own regions.</p>
+            <div class="story-footer">
+              <span class="tag">Local government</span>
+              <a href="#">Read article</a>
+            </div>
+          </article>
+
+          <article class="story">
+            <div class="meta">Black Voice News • Opinion • Author Name • April 12, 2026</div>
+            <h2>Community media perspective on policy impact, accountability and trust</h2>
+            <p>A slot like this makes the issue feel broader, more representative and more useful to readers who want to understand how statewide issues are landing in specific communities.</p>
+            <div class="story-footer">
+              <span class="tag">Community perspective</span>
+              <a href="#">Read article</a>
+            </div>
+          </article>
+
+          <article class="story">
+            <div class="meta">San Fernando Sun Newspaper • Opinion • Author Name • April 12, 2026</div>
+            <h2>Neighborhood-level opinion gives texture to a larger Southern California issue</h2>
+            <p>This type of item demonstrates the value proposition for CNPA: local editorial and community voice content can reveal sentiment that never reaches statewide political coverage on its own.</p>
+            <div class="story-footer">
+              <span class="tag">Southern California</span>
+              <a href="#">Read article</a>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">
+          <h2>Quick Scan</h2>
+          <span>Additional signals worth watching</span>
+        </div>
+        <div class="quick-scan">
+          <div class="scan-row">
+            <div class="scan-pub">48 Hills</div>
+            <div class="scan-copy">
+              <strong>Urban policy and neighborhood change continue to dominate San Francisco opinion writing</strong>
+              <p>One- to two-sentence summaries would make this section highly skimmable for staff and lobbyists.</p>
+            </div>
+          </div>
+          <div class="scan-row">
+            <div class="scan-pub">Fresno Bee</div>
+            <div class="scan-copy">
+              <strong>Central Valley editorial pages keep returning to implementation gaps and state-local disconnects</strong>
+              <p>This format helps preserve breadth without making the email too heavy.</p>
+            </div>
+          </div>
+          <div class="scan-row">
+            <div class="scan-pub">Comstock’s Magazine</div>
+            <div class="scan-copy">
+              <strong>Business and civic commentary adds a Sacramento-adjacent view of policy consequences</strong>
+              <p>Useful for giving the issue some economic and institutional perspective, not just political reaction.</p>
+            </div>
+          </div>
+          <div class="scan-row">
+            <div class="scan-pub">Wind Newspaper</div>
+            <div class="scan-copy">
+              <strong>Ethnic and community press contributions broaden the newsletter’s view of public mood</strong>
+              <p>These briefs reinforce that the publication is about statewide listening, not just large-market editorial boards.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <strong>Prototype note:</strong> In production, this email would be populated automatically from RSS feeds or monitored opinion pages, then summarized and formatted for distribution to legislators, lobbyists and Capitol stakeholders.
+    </footer>
+  </div>
+</body>
+</html>

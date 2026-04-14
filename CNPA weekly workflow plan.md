@@ -1,0 +1,209 @@
+**CNPA Weekly Workflow Plan**
+
+**Recommended Stack**
+
+- `Feedly`
+  For direct RSS ingestion from sources that expose opinion feeds.
+- `Airtable`
+  As the central source-of-truth database for publications, incoming articles, issue drafts, and review status.
+- `Make`
+  For automation between Feedly, Airtable, OpenAI, and Mailchimp.
+- `OpenAI`
+  For summaries, intro paragraphs, subject lines, and issue drafting.
+- `Mailchimp`
+  For final email assembly, testing, and sending.
+
+**Workflow Diagram**
+
+```mermaid
+flowchart TD
+    A["RSS feeds in Feedly"] --> E["Airtable: article intake table"]
+    B["Page monitors / scrapers for non-RSS sources"] --> E
+    C["Manual-review sources"] --> E
+    E --> F["Filtering + dedupe rules"]
+    F --> G["OpenAI enrichment\nsummary, tags, region, significance"]
+    G --> H["Airtable: reviewed candidate pool"]
+    H --> I["Weekly issue builder in Make"]
+    I --> J["OpenAI issue draft\nsubject lines, intro, sections"]
+    J --> K["Mailchimp draft template"]
+    K --> L["Human editorial review"]
+    L --> M["Send weekly issue"]
+    M --> N["Archive issue + save sent links"]
+```
+
+**Core Airtable Structure**
+
+Use four tables.
+
+1. `Publications`
+- publication_name
+- homepage_url
+- opinion_source_url
+- source_type
+- ingestion_tier
+- monitoring_method
+- active_y_n
+- notes
+
+2. `Articles`
+- article_title
+- publication_name
+- author
+- published_date
+- article_url
+- source_url
+- source_type
+- region
+- raw_excerpt
+- summary
+- topic_tag
+- significance_score
+- duplicate_y_n
+- candidate_y_n
+- issue_week
+
+3. `Issue Drafts`
+- issue_date
+- subject_line_option_1
+- subject_line_option_2
+- intro_paragraph
+- top_lines_html
+- community_voices_html
+- quick_scan_html
+- editor_status
+- mailchimp_campaign_id
+
+4. `Editorial Review`
+- issue_date
+- publication_balance_ok
+- statewide_mix_ok
+- legal_or_tone_flags
+- final_notes
+- approved_to_send
+
+**Weekly Automation Flow**
+
+1. Daily article intake
+- Feedly sends new RSS items into Airtable.
+- Page monitors send newly detected opinion-page links into Airtable.
+- Each new record gets a normalized URL and duplicate check.
+
+2. Daily AI enrichment
+- OpenAI writes:
+  - 1-2 sentence summary
+  - topic tag
+  - region tag
+  - significance score
+- Low-signal or off-topic items are marked `candidate_y_n = no`.
+
+3. Weekly issue assembly
+- Every Thursday evening or Friday morning, Make pulls all `candidate_y_n = yes` items for that week.
+- It groups them into:
+  - `Top Lines`
+  - `Community Voices`
+  - `Quick Scan`
+- OpenAI drafts:
+  - 2-3 subject line options
+  - a short intro paragraph
+  - section ordering
+
+4. Mailchimp draft creation
+- Make sends the assembled content into a prepared Mailchimp template.
+- The template already includes CNPA branding and layout.
+
+5. Human review and send
+- An editor reviews the draft, trims weak items, checks balance, and sends.
+
+**Recommended Weekly Rhythm**
+
+- `Daily`
+  Intake and summarize new items automatically.
+- `Thursday 5 PM`
+  Freeze the weekly candidate pool.
+- `Friday 7 AM`
+  Auto-build draft issue.
+- `Friday 8-9 AM`
+  Human editorial review.
+- `Friday 10 AM`
+  Send newsletter.
+
+**Make Scenario Outline**
+
+Scenario 1: `RSS Intake`
+- Trigger: new Feedly article
+- Action: create Airtable article record
+- Action: run duplicate check
+
+Scenario 2: `Page Monitor Intake`
+- Trigger: new article detected on monitored page
+- Action: fetch article page
+- Action: create Airtable article record
+
+Scenario 3: `AI Enrichment`
+- Trigger: new Airtable record without summary
+- Action: call OpenAI
+- Action: write summary, tags, region, significance back to Airtable
+
+Scenario 4: `Weekly Draft Builder`
+- Trigger: scheduled Friday morning
+- Action: fetch current-week candidate items
+- Action: call OpenAI for issue intro + section sort
+- Action: build formatted HTML blocks
+- Action: create Mailchimp draft
+- Action: create/update Airtable issue draft record
+
+**OpenAI Prompt Jobs**
+
+Use OpenAI for four narrow tasks rather than one giant prompt.
+
+1. `Article Summary`
+- Input: title, publication, excerpt or article text
+- Output: 1-2 sentence neutral summary
+
+2. `Classification`
+- Input: summary + title
+- Output:
+  - topic tag
+  - region
+  - significance score
+
+3. `Issue Intro`
+- Input: top 10-15 kept items
+- Output: short statewide intro paragraph
+
+4. `Subject Lines`
+- Input: issue intro + leading themes
+- Output: 3 subject line options
+
+**Editorial Rules**
+
+Set these early so the automation stays useful.
+
+- no more than `2` items from any one publication unless it is a special issue
+- every issue should include:
+  - at least one Southern California source
+  - at least one Bay Area source
+  - at least one Central Valley or inland source
+  - at least one community or ethnic media source
+- prefer items with clear California public-policy relevance
+- avoid stacking multiple near-identical takes on the same story unless they show regional differences
+
+**Best First Launch Version**
+
+For the first live weekly issue:
+- use `Tier 1` and strongest `Tier 2` sources only
+- keep `Tier 3` manual-review sources out of automation
+- require final human approval before every send
+
+That version is the fastest path to a reliable weekly product.
+
+**Suggested First Implementation Order**
+
+1. Finalize the first 10-12 prototype sources.
+2. Build Airtable tables.
+3. Connect Feedly and page monitors to Airtable.
+4. Add OpenAI summary/classification step.
+5. Create Mailchimp template from the HTML prototype.
+6. Run one internal test issue.
+7. Refine tone, balance, and section logic.
+8. Start weekly publication.

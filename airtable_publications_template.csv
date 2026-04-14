@@ -1,0 +1,4 @@
+"Publication Name","Homepage URL","Opinion Source URL","Source Type","Ingestion Tier","Monitoring Method","Active","Notes"
+"Los Angeles Times","https://www.latimes.com","https://www.latimes.com/opinion","RSS opinion feed","Tier 1","Use opinion RSS feed","Yes","Prototype source"
+"The Sacramento Bee","https://www.sacbee.com","https://www.sacbee.com/opinion/","Opinion page","Tier 2","Monitor opinion page for new items","Yes","Prototype source"
+"San Francisco Chronicle","https://www.sfchronicle.com","https://www.sfchronicle.com/opinion","Opinion page","Tier 2","Monitor opinion page for new items","Yes","Prototype source"
