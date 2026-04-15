@@ -4,10 +4,17 @@
 
 require 'csv'
 
+def read_csv(path)
+  CSV.read(path, headers: true, encoding: 'bom|utf-8', row_sep: :auto, liberal_parsing: true)
+rescue CSV::MalformedCSVError
+  normalized = File.read(path, mode: 'r:bom|utf-8').gsub("\r\n", "\n")
+  CSV.parse(normalized, headers: true, liberal_parsing: true)
+end
+
 input_path = File.expand_path('CNPA prototype ingestion list.csv', __dir__)
 output_path = File.expand_path('airtable_publications_prototype_import.csv', __dir__)
 
-rows = CSV.read(input_path, headers: true, encoding: 'bom|utf-8')
+rows = read_csv(input_path)
 
 headers = [
   'Publication Name',
@@ -20,7 +27,7 @@ headers = [
   'Notes'
 ]
 
-CSV.open(output_path, 'w', write_headers: true, headers: headers, force_quotes: true) do |csv|
+CSV.open(output_path, 'w', write_headers: true, headers: headers, force_quotes: true, row_sep: "\n") do |csv|
   rows.each do |row|
     source_type =
       if row['RSS Opinion feed Y/N'] == 'Y'

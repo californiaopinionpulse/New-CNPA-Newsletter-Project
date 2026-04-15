@@ -2,9 +2,11 @@
 # frozen_string_literal: true
 
 require 'cgi'
+require 'csv'
 require 'fileutils'
 require 'open3'
 require 'rexml/document'
+require 'rbconfig'
 require 'shellwords'
 require 'tmpdir'
 
@@ -18,12 +20,39 @@ def xml_text(node)
 end
 
 def extract_xml(xlsx_path, internal_path)
+  if Gem.win_platform?
+    Dir.mktmpdir('cnpa_xlsx_extract') do |dir|
+      expand_xlsx_archive(xlsx_path, dir)
+      extracted_path = File.join(dir, *internal_path.split('/'))
+      raise "Failed to read #{internal_path} from #{xlsx_path}" unless File.exist?(extracted_path)
+
+      return File.binread(extracted_path)
+    end
+  end
+
   escaped_xlsx = Shellwords.escape(xlsx_path)
   escaped_internal = Shellwords.escape(internal_path)
   stdout, stderr, status = Open3.capture3("unzip -p #{escaped_xlsx} #{escaped_internal}")
   raise "Failed to read #{internal_path} from #{xlsx_path}: #{stderr}" unless status.success?
 
   stdout
+end
+
+def expand_xlsx_archive(xlsx_path, destination)
+  escaped_destination = destination.to_s.gsub("'", "''")
+  Dir.mktmpdir('cnpa_xlsx_zip') do |zip_dir|
+    zip_path = File.join(zip_dir, "#{File.basename(xlsx_path, '.xlsx')}.zip")
+    FileUtils.cp(xlsx_path, zip_path)
+    escaped_zip = zip_path.to_s.gsub("'", "''")
+    command = [
+      'powershell',
+      '-NoProfile',
+      '-Command',
+      "Expand-Archive -LiteralPath '#{escaped_zip}' -DestinationPath '#{escaped_destination}' -Force"
+    ]
+    _stdout, stderr, status = Open3.capture3(*command)
+    raise "Failed to expand #{xlsx_path}: #{stderr}" unless status.success?
+  end
 end
 
 def load_shared_strings(xlsx_path)
@@ -393,9 +422,33 @@ def build_workbook_xlsx(output_path, sheet_name, rows)
 
     File.write(File.join(dir, 'xl', 'worksheets', 'sheet1.xml'), build_sheet_xml(rows))
 
-    Dir.chdir(dir) do
-      system('zip', '-qr', output_path, '.', exception: true)
+    package_xlsx_archive(dir, output_path)
+  end
+end
+
+def package_xlsx_archive(source_dir, output_path)
+  if Gem.win_platform?
+    File.delete(output_path) if File.exist?(output_path)
+    Dir.mktmpdir('cnpa_xlsx_zip') do |zip_dir|
+      zip_path = File.join(zip_dir, "#{File.basename(output_path, '.xlsx')}.zip")
+      escaped_source = source_dir.to_s.gsub("'", "''")
+      escaped_zip = zip_path.to_s.gsub("'", "''")
+      command = [
+        'powershell',
+        '-NoProfile',
+        '-Command',
+        "Compress-Archive -Path (Join-Path '#{escaped_source}' '*') -DestinationPath '#{escaped_zip}' -Force"
+      ]
+      _stdout, stderr, status = Open3.capture3(*command)
+      raise "Failed to create #{output_path}: #{stderr}" unless status.success?
+
+      FileUtils.mv(zip_path, output_path)
     end
+    return
+  end
+
+  Dir.chdir(source_dir) do
+    system('zip', '-qr', output_path, '.', exception: true)
   end
 end
 
@@ -484,17 +537,9 @@ member_rows.drop(1).each do |row|
   end
 
   csv_path = File.expand_path('CNPA URLS and opinion feeds.csv', Dir.pwd)
-  File.open(csv_path, 'w') do |file|
+  CSV.open(csv_path, 'w', write_headers: false, force_quotes: true, row_sep: "\n") do |csv|
     output_rows.each do |row|
-      escaped = row.map do |value|
-        text = value.to_s
-        if text.include?(',') || text.include?('"') || text.include?("\n")
-          '"' + text.gsub('"', '""') + '"'
-        else
-          text
-        end
-      end
-      file.puts(escaped.join(','))
+      csv << row
     end
   end
 

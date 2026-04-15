@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-04-14T23:54:37Z",
+  "article_count": 3,
+  "sources": [
+    "sacramento_bee",
+    "fresno_bee",
+    "black_voice_news"
+  ],
+  "articles": [
+    {
+      "source_key": "sacramento_bee",
+      "publication": "The Sacramento Bee",
+      "source_type": "page_monitor",
+      "source_url": "https://www.sacbee.com/opinion/",
+      "article_url": "",
+      "title": "",
+      "author": "",
+      "published_date": "",
+      "raw_excerpt": "Collector error: No article records extracted from https://www.sacbee.com/opinion/op-ed/",
+      "body_text": "",
+      "collected_at": "2026-04-14T23:54:37Z",
+      "collector_mode": "page"
+    },
+    {
+      "source_key": "fresno_bee",
+      "publication": "The Fresno Bee",
+      "source_type": "page_monitor",
+      "source_url": "https://www.fresnobee.com/opinion/",
+      "article_url": "",
+      "title": "",
+      "author": "",
+      "published_date": "",
+      "raw_excerpt": "Collector error: No article records extracted from https://www.fresnobee.com/opinion/readers-opinion/",
+      "body_text": "",
+      "collected_at": "2026-04-14T23:54:37Z",
+      "collector_mode": "page"
+    },
+    {
+      "source_key": "black_voice_news",
+      "publication": "Black Voice News",
+      "source_type": "page_monitor",
+      "source_url": "https://blackvoicenews.com/category/opinion/",
+      "article_url": "",
+      "title": "",
+      "author": "",
+      "published_date": "",
+      "raw_excerpt": "Collector error: https://blackvoicenews.com/category/opinion/ => Request failed for https://blackvoicenews.com/category/opinion/: 403 Forbidden",
+      "body_text": "",
+      "collected_at": "2026-04-14T23:54:37Z",
+      "collector_mode": "page"
+    }
+  ]
+}

@@ -1,10 +1,10 @@
 **Prototype Assets**
 
-- Newsletter mockup: [cnpa-newsletter-prototype.html](/Users/julie/Desktop/CNPA/New%20Newsletter%20Project/cnpa-newsletter-prototype.html)
-- Source matching sheet: [CNPA URLS and opinion feeds.xlsx](/Users/julie/Desktop/CNPA/New%20Newsletter%20Project/CNPA%20URLS%20and%20opinion%20feeds.xlsx)
-- Feed tracker: [CNPA prototype feed tracker.csv](/Users/julie/Desktop/CNPA/New%20Newsletter%20Project/CNPA%20prototype%20feed%20tracker.csv)
-- Ingestion plan: [CNPA prototype ingestion list.csv](/Users/julie/Desktop/CNPA/New%20Newsletter%20Project/CNPA%20prototype%20ingestion%20list.csv)
-- Monitoring spec: [CNPA prototype monitoring spec.csv](/Users/julie/Desktop/CNPA/New%20Newsletter%20Project/CNPA%20prototype%20monitoring%20spec.csv)
+- Newsletter mockup: [cnpa-newsletter-prototype.html](./cnpa-newsletter-prototype.html)
+- Source matching sheet: [CNPA URLS and opinion feeds.xlsx](./CNPA%20URLS%20and%20opinion%20feeds.xlsx)
+- Feed tracker: [CNPA prototype feed tracker.csv](./CNPA%20prototype%20feed%20tracker.csv)
+- Ingestion plan: [CNPA prototype ingestion list.csv](./CNPA%20prototype%20ingestion%20list.csv)
+- Monitoring spec: [CNPA prototype monitoring spec.csv](./CNPA%20prototype%20monitoring%20spec.csv)
 
 **Suggested Subject Line**
 

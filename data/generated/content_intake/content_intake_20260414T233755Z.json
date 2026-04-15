@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-04-14T23:37:55Z",
+  "article_count": 1,
+  "sources": [
+    "voice_of_oc"
+  ],
+  "articles": [
+    {
+      "source_key": "voice_of_oc",
+      "publication": "Voice of OC",
+      "source_type": "page_monitor",
+      "source_url": "https://voiceofoc.org/category/involvement/community-opinion/",
+      "article_url": "",
+      "title": "",
+      "author": "",
+      "published_date": "",
+      "raw_excerpt": "Collector error: undefined method 'empty?' for nil",
+      "body_text": "",
+      "collected_at": "2026-04-14T23:37:55Z",
+      "collector_mode": "page"
+    }
+  ]
+}

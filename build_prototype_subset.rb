@@ -4,10 +4,17 @@
 
 require 'csv'
 
+def read_csv(path)
+  CSV.read(path, headers: true, encoding: 'bom|utf-8', row_sep: :auto, liberal_parsing: true)
+rescue CSV::MalformedCSVError
+  normalized = File.read(path, mode: 'r:bom|utf-8').gsub("\r\n", "\n")
+  CSV.parse(normalized, headers: true, liberal_parsing: true)
+end
+
 source_path = File.expand_path('CNPA URLS and opinion feeds.csv', __dir__)
 output_path = File.expand_path('CNPA prototype subset.csv', __dir__)
 
-rows = CSV.read(source_path, headers: true, encoding: 'bom|utf-8')
+rows = read_csv(source_path)
 by_name = rows.map { |r| [r['Member Publication Name'], r] }.to_h
 
 targets = [
@@ -103,7 +110,7 @@ targets.each do |prototype_name, bucket, priority, why|
   ]
 end
 
-CSV.open(output_path, 'w', write_headers: false, force_quotes: true) do |csv|
+CSV.open(output_path, 'w', write_headers: false, force_quotes: true, row_sep: "\n") do |csv|
   output_rows.each { |r| csv << r }
 end
 

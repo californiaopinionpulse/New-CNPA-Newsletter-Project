@@ -4,10 +4,17 @@
 
 require 'csv'
 
+def read_csv(path)
+  CSV.read(path, headers: true, encoding: 'bom|utf-8', row_sep: :auto, liberal_parsing: true)
+rescue CSV::MalformedCSVError
+  normalized = File.read(path, mode: 'r:bom|utf-8').gsub("\r\n", "\n")
+  CSV.parse(normalized, headers: true, liberal_parsing: true)
+end
+
 input_path = File.expand_path('CNPA prototype ingestion list.csv', __dir__)
 output_path = File.expand_path('CNPA prototype monitoring spec.csv', __dir__)
 
-rows = CSV.read(input_path, headers: true, encoding: 'bom|utf-8')
+rows = read_csv(input_path)
 
 headers = [
   'Prototype Publication Name',
@@ -230,7 +237,7 @@ def spec_for(row)
   ]
 end
 
-CSV.open(output_path, 'w', write_headers: true, headers: headers, force_quotes: true) do |csv|
+CSV.open(output_path, 'w', write_headers: true, headers: headers, force_quotes: true, row_sep: "\n") do |csv|
   rows.each do |row|
     csv << spec_for(row)
   end
