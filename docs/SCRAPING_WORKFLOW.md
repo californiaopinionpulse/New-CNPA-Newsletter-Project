@@ -14,7 +14,6 @@ Collect opinion/article candidates from a small pilot source set into a normaliz
 - `voice_of_oc` - page monitor
 - `a_news_cafe` - page monitor
 - `forty_eight_hills` - page monitor
-- `black_voice_news` - page monitor
 - `press_democrat` - page monitor
 - `san_fernando_sun` - page monitor
 - `american_community_media` - page monitor
@@ -26,6 +25,10 @@ Collect opinion/article candidates from a small pilot source set into a normaliz
 - `desert_sun` - page monitor
 - `redding_record_searchlight` - page monitor
 - `union_democrat` - page monitor
+
+## Paused Sources
+
+- `black_voice_news` - currently excluded from default runs pending later review
 
 ## Normalized Output Fields
 
@@ -79,11 +82,13 @@ It currently:
 - supports one RSS path and an expanding set of page-monitor paths
 - uses only Ruby standard-library dependencies
 - extracts article metadata primarily from RSS fields, JSON-LD, and HTML meta tags
+- keeps only current content from the previous 4 weeks by default
+- flags or excludes weak-source output according to current prototype rules
 - gives us a clean staging layer before Airtable writes
 
 ## Next Steps
 
-1. Tune source-specific extraction for the newly added publications that return weak or blocked results.
-2. Add dedupe and URL normalization rules.
-3. Add Airtable write support after local output looks stable.
-4. Add source-specific extraction overrides where generic metadata is weak.
+1. Formalize pause criteria for weak sources during the prototype phase.
+2. Decide whether low-yield sources should stay active or be paused temporarily.
+3. Keep the active source set synced across PC and MacBook through GitHub.
+4. Move upstream into editorial review workflow and issue assembly once the active scrape set is stable.

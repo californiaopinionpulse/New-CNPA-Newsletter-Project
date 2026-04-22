@@ -2,24 +2,30 @@
 
 ## Goal
 
-Make this Windows clone usable for continued COP prototype work.
+Keep this Windows clone usable as a primary COP prototype workstation and ready for MacBook handoff via GitHub.
 
 ## Required Tools
 
 1. Git
 2. Ruby
 
+## Current State
+
+This PC is already configured for active work:
+
+- `git` works in PowerShell
+- `ruby` works in PowerShell
+- `.\run_pipeline.ps1` works
+- the scraper and Airtable export scripts run locally
+
 ## Run Order
 
-After Ruby is installed, run these from the project root:
+From the project root:
 
 ```powershell
-ruby .\build_cnpa_urls.rb
-ruby .\build_prototype_subset.rb
-ruby .\build_prototype_feed_tracker.rb
-ruby .\build_prototype_ingestion_list.rb
-ruby .\build_monitoring_spec.rb
-ruby .\build_airtable_publications_import.rb
+.\run_pipeline.ps1
+ruby .\scripts\scrape_cnpa_content.rb
+ruby .\scripts\build_airtable_articles_import.rb
 ```
 
 ## Expected Outputs
@@ -30,8 +36,13 @@ ruby .\build_airtable_publications_import.rb
 - `CNPA prototype ingestion list.csv`
 - `CNPA prototype monitoring spec.csv`
 - `airtable_publications_prototype_import.csv`
+- `data/generated/content_intake/latest_content_intake.json`
+- `data/generated/content_intake/latest_content_intake.csv`
+- `data/generated/content_intake/airtable_articles_import.csv`
 
 ## Notes
 
-- A deeper folder reorganization was attempted, but Windows/OneDrive denied the file moves.
-- Temporary Office lockfiles such as `~$CNPA URLS and opinion feeds.xlsx` are now ignored by Git.
+- The repo contains both source code/config and generated editorial-review outputs.
+- Timestamped scrape snapshots under `data/generated/content_intake/content_intake_*.json` are local run artifacts and are ignored by Git.
+- Temporary Office lockfiles such as `~$CNPA URLS and opinion feeds.xlsx` are ignored by Git.
+- The next interoperability step is to keep the PC and MacBook synced through GitHub and regenerate outputs locally on each machine.

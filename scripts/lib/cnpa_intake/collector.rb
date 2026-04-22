@@ -14,6 +14,8 @@ require_relative 'html_utils'
 
 module CnpaIntake
   class Collector
+    DEFAULT_LOOKBACK_DAYS = 28
+    FUTURE_DATE_GRACE_SECONDS = 86_400
     OUTPUT_HEADERS = %w[
       source_key
       publication
@@ -29,10 +31,13 @@ module CnpaIntake
       collector_mode
     ].freeze
 
-    def initialize(sources:, output_dir:)
+    def initialize(sources:, output_dir:, lookback_days: DEFAULT_LOOKBACK_DAYS, now: Time.now.utc)
       @sources = sources
       @output_dir = output_dir
       @fetcher = Fetcher.new
+      @lookback_days = lookback_days
+      @now = now.utc
+      @cutoff_time = @now - (@lookback_days * 86_400)
     end
 
     def run
@@ -44,14 +49,17 @@ module CnpaIntake
     private
 
     def collect_source(source)
-      case source[:mode]
-      when :rss
-        collect_rss(source)
-      when :page
-        collect_page(source)
-      else
-        raise "Unsupported source mode: #{source[:mode]}"
-      end
+      articles =
+        case source[:mode]
+        when :rss
+          collect_rss(source)
+        when :page
+          collect_page(source)
+        else
+          raise "Unsupported source mode: #{source[:mode]}"
+        end
+
+      filter_recent_articles(articles)
     rescue StandardError => e
       [{
         source_key: source[:key],
@@ -79,17 +87,46 @@ module CnpaIntake
       )
       feed = RSS::Parser.parse(payload[:body], false)
 
-      feed.items.map do |item|
+      build_rss_articles(source, feed.items, payload[:final_url] || source[:feed_url])
+    end
+
+    def build_rss_articles(source, items, source_url)
+      Array(items).map do |item|
+        title =
+          if item.respond_to?(:title)
+            item.title.to_s.strip
+          else
+            item.respond_to?(:name) ? item.name.to_s.strip : ''
+          end
+
+        link =
+          if item.respond_to?(:link)
+            value = item.link
+            value = value.href if value.respond_to?(:href)
+            value.to_s.strip
+          else
+            ''
+          end
+
+        description =
+          if item.respond_to?(:description)
+            item.description.to_s.strip
+          elsif item.respond_to?(:summary)
+            item.summary.to_s.strip
+          else
+            ''
+          end
+
         {
           source_key: source[:key],
           publication: source[:publication],
           source_type: source[:source_type],
-          source_url: source[:feed_url],
-          article_url: item.link.to_s.strip,
-          title: item.title.to_s.strip,
+          source_url: source_url,
+          article_url: link,
+          title: title,
           author: extract_rss_author(item),
           published_date: parse_time(item.pubDate || item.dc_date),
-          raw_excerpt: item.description.to_s.strip,
+          raw_excerpt: description,
           body_text: '',
           collected_at: Time.now.utc.iso8601,
           collector_mode: 'rss'
@@ -100,10 +137,25 @@ module CnpaIntake
     def collect_page(source)
       listing = fetch_listing_page(source)
       embedded_fallbacks = embedded_item_index(listing[:body], source)
-      article_urls = candidate_article_urls(listing[:body], source).first(source[:max_articles] || 5)
+      article_urls = candidate_article_urls(listing[:body], source).first(candidate_limit_for(source))
+      articles = collect_article_pages(source, listing, article_urls, embedded_fallbacks)
+      articles = filter_recent_articles(articles).first(source[:max_articles] || 5)
+
+      min_articles = source[:min_articles] || [2, source[:max_articles].to_i].max
+      if articles.length < min_articles
+        feed_articles = filter_recent_articles(collect_page_feed_fallback(source, listing))
+        return feed_articles.first(source[:max_articles]) if feed_articles.length >= min_articles
+      end
+
+      return articles unless articles.empty?
+
+      raise "No article records extracted from #{listing[:final_url] || source[:list_url]}"
+    end
+
+    def collect_article_pages(source, listing, article_urls, embedded_fallbacks)
       articles = []
 
-      article_urls.map do |article_url|
+      article_urls.each do |article_url|
         article = @fetcher.fetch(
           article_url,
           headers: source.fetch(:headers, {}),
@@ -121,7 +173,12 @@ module CnpaIntake
           article_url: metadata[:canonical_url].to_s.empty? ? article_url : metadata[:canonical_url],
           title: pick_first(metadata[:title], HtmlUtils.title(article[:body]), embedded_fallbacks.dig(normalize_url(article_url), :title)),
           author: pick_first(metadata[:author], embedded_fallbacks.dig(normalize_url(article_url), :author)),
-          published_date: pick_first(metadata[:published_date], embedded_fallbacks.dig(normalize_url(article_url), :published_date)),
+          published_date: pick_first(
+            metadata[:published_date],
+            embedded_fallbacks.dig(normalize_url(article_url), :published_date),
+            infer_published_date_from_url(metadata[:canonical_url]),
+            infer_published_date_from_url(article_url)
+          ),
           raw_excerpt: pick_first(metadata[:excerpt], metadata[:summary], embedded_fallbacks.dig(normalize_url(article_url), :excerpt)),
           body_text: metadata[:body_text],
           collected_at: Time.now.utc.iso8601,
@@ -131,9 +188,7 @@ module CnpaIntake
         next
       end
 
-      return articles unless articles.empty?
-
-      raise "No article records extracted from #{listing[:final_url] || source[:list_url]}"
+      articles
     end
 
     def fetch_listing_page(source)
@@ -157,18 +212,79 @@ module CnpaIntake
 
     def candidate_article_urls(html, source)
       embedded_urls = embedded_article_urls(html, source)
+      json_ld_urls = HtmlUtils.listing_json_ld_article_urls(html, source[:list_url])
       seen = Set.new
 
-      (embedded_urls + HtmlUtils.extract_links(html, source[:list_url])).filter_map do |url|
+      (embedded_urls + json_ld_urls + HtmlUtils.extract_links(html, source[:list_url])).filter_map do |url|
         next if same_listing_url?(url, source[:list_url])
         next if seen.include?(url)
         next unless allowed_host?(url, source[:allowed_hosts])
         next unless article_url?(url, source[:article_url_patterns])
         next if excluded_url?(url, source[:exclude_url_patterns])
+        next unless allowed_context?(html, url, source)
 
         seen << url
         url
       end
+    end
+
+    def allowed_context?(html, url, source)
+      required = Array(source[:required_context_patterns]).compact
+      ignored = Array(source[:ignore_context_patterns]).compact
+      return true if required.empty? && ignored.empty?
+
+      snippets = url_context_snippets(html, url)
+      return true if snippets.empty?
+
+      valid_snippets = snippets.reject { |snippet| ignored.any? { |pattern| snippet.match?(pattern) } }
+      return false if valid_snippets.empty?
+      return true if required.empty?
+
+      valid_snippets.any? { |snippet| required.any? { |pattern| snippet.match?(pattern) } }
+    end
+
+    def url_context_snippets(html, url)
+      haystack = html.to_s
+      snippets = []
+      offset = 0
+
+      while (index = haystack.index(url, offset))
+        start = [index - 350, 0].max
+        snippets << haystack[start, 900]
+        offset = index + url.length
+      end
+
+      snippets
+    end
+
+    def candidate_limit_for(source)
+      max_articles = source[:max_articles] || 5
+      explicit_limit = source[:candidate_limit]
+      return explicit_limit if explicit_limit
+
+      [max_articles * 4, max_articles].max
+    end
+
+    def collect_page_feed_fallback(source, listing)
+      return [] if source[:disable_feed_fallback]
+
+      feed_urls = Array(source[:feed_urls]) + HtmlUtils.extract_feed_links(listing[:body], listing[:final_url] || source[:list_url])
+      feed_urls.uniq.each do |feed_url|
+        payload = @fetcher.fetch(
+          feed_url,
+          headers: source.fetch(:headers, {}),
+          open_timeout: source.fetch(:open_timeout, 20),
+          read_timeout: source.fetch(:read_timeout, 20),
+          retries: source.fetch(:retries, 0)
+        )
+        feed = RSS::Parser.parse(payload[:body], false)
+        articles = build_rss_articles(source, feed.items, payload[:final_url] || feed_url)
+        return articles unless articles.empty?
+      rescue StandardError
+        next
+      end
+
+      []
     end
 
     def embedded_article_urls(html, source)
@@ -229,6 +345,7 @@ module CnpaIntake
     end
 
     def extract_rss_author(item)
+      return item.itunes_author.to_s.strip if item.respond_to?(:itunes_author) && !item.itunes_author.to_s.strip.empty?
       return item.author.to_s.strip unless item.author.to_s.strip.empty?
       return item.dc_creator.to_s.strip unless !item.respond_to?(:dc_creator) || item.dc_creator.to_s.strip.empty?
 
@@ -261,6 +378,48 @@ module CnpaIntake
       HtmlUtils.strip_tags(item['byline']).sub(/\ABy\s+/i, '').strip
     end
 
+    def filter_recent_articles(articles)
+      Array(articles).filter_map do |article|
+        next article if collector_error_article?(article)
+
+        published_at = article_published_time(article)
+        if published_at.nil?
+          article[:date_status] = 'unknown'
+          next article
+        end
+        next if published_at < @cutoff_time
+        next if published_at > (@now + FUTURE_DATE_GRACE_SECONDS)
+
+        article.merge(
+          published_date: published_at.utc.iso8601,
+          date_status: 'verified'
+        )
+      end
+    end
+
+    def collector_error_article?(article)
+      article[:raw_excerpt].to_s.match?(/\ACollector error:/i)
+    end
+
+    def article_published_time(article)
+      value = article[:published_date].to_s.strip
+      return nil if value.empty?
+
+      Time.parse(value).utc
+    rescue ArgumentError
+      nil
+    end
+
+    def infer_published_date_from_url(url)
+      value = url.to_s
+      match = value.match(%r{/(20\d{2})/(0[1-9]|1[0-2])/([0-3]\d)/})
+      return '' unless match
+
+      Time.utc(match[1].to_i, match[2].to_i, match[3].to_i).iso8601
+    rescue ArgumentError
+      ''
+    end
+
     def write_outputs(articles)
       FileUtils.mkdir_p(@output_dir)
 
@@ -271,6 +430,8 @@ module CnpaIntake
 
       json_payload = {
         generated_at: Time.now.utc.iso8601,
+        lookback_days: @lookback_days,
+        cutoff_date: @cutoff_time.utc.iso8601,
         article_count: articles.length,
         sources: @sources.map { |source| source[:key] },
         articles: articles

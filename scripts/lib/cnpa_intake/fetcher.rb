@@ -62,17 +62,14 @@ module CnpaIntake
     private
 
     def perform_request(uri, headers:, open_timeout:, read_timeout:)
-      Net::HTTP.start(
-        uri.host,
-        uri.port,
-        use_ssl: uri.scheme == 'https',
-        open_timeout: open_timeout,
-        read_timeout: read_timeout
-      ) do |http|
-        request = Net::HTTP::Get.new(uri)
-        DEFAULT_HEADERS.merge(headers).each { |key, value| request[key] = value }
-        http.request(request)
-      end
+      http = Net::HTTP.new(uri.host, uri.port, nil, nil)
+      http.use_ssl = uri.scheme == 'https'
+      http.open_timeout = open_timeout
+      http.read_timeout = read_timeout
+
+      request = Net::HTTP::Get.new(uri)
+      DEFAULT_HEADERS.merge(headers).each { |key, value| request[key] = value }
+      http.request(request)
     end
 
     def decode_body(response)

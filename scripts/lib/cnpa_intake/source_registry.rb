@@ -97,13 +97,19 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://www.modbee.com/opinion/opn-columns-blogs/',
           list_urls: [
+            'https://www.modbee.com/opinion/editorials/',
+            'https://www.modbee.com/opinion/opn-columns-blogs/community-columns/',
             'https://www.modbee.com/opinion/opn-columns-blogs/',
             'https://www.modbee.com/opinion/'
           ],
           allowed_hosts: ['www.modbee.com', 'amp.modbee.com'],
           article_url_patterns: [%r{/article\d+\.html}],
           discovery: :mcclatchy_state,
+          ignore_context_patterns: [%r{sectionheadlines}i, %r{trending}i],
+          required_context_patterns: [%r{/opinion/}i, %r{community-columns}i, %r{editorials}i, %r{opn-columns-blogs}i],
+          disable_feed_fallback: true,
           max_articles: 6,
+          candidate_limit: 32,
           open_timeout: 15,
           read_timeout: 45,
           retries: 1,
@@ -141,6 +147,7 @@ module CnpaIntake
         {
           key: 'black_voice_news',
           publication: 'Black Voice News',
+          active: false,
           mode: :page,
           source_type: 'page_monitor',
           list_url: 'https://blackvoicenews.com/category/opinion/',
@@ -160,15 +167,19 @@ module CnpaIntake
           publication: 'The Press Democrat',
           mode: :page,
           source_type: 'page_monitor',
-          list_url: 'https://www.pressdemocrat.com/article/opinion/',
+          list_url: 'https://www.pressdemocrat.com/opinion/',
           allowed_hosts: ['www.pressdemocrat.com'],
-          article_url_patterns: [%r{/article/}, %r{/opinion/}],
+          article_url_patterns: [%r{/\d{4}/\d{2}/\d{2}/}, %r{/opinion/}],
           exclude_url_patterns: [
             %r{/opinion/?$},
             %r{/opinion/editorials/?$},
             %r{/opinion/letters-to-the-editor/?$}
           ],
+          ignore_context_patterns: [%r{widget-trending-stories}i, %r{trending-bar}i],
+          required_context_patterns: [%r{category-opinion}i, %r{opinion-columnists}i, %r{type-of-work-opinion}i],
+          feed_urls: ['https://www.pressdemocrat.com/opinion/feed/'],
           max_articles: 6,
+          min_articles: 3,
           retries: 1,
           headers: {
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
@@ -192,8 +203,9 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://americancommunitymedia.org/category/oped/',
           allowed_hosts: ['americancommunitymedia.org'],
-          article_url_patterns: [%r{/\d{4}/\d{2}/}, %r{/[^/]+/?$}],
+          article_url_patterns: [%r{/oped/}],
           exclude_url_patterns: [
+            %r{^https?://americancommunitymedia\.org/?$},
             %r{/category/oped/?$},
             %r{/category/},
             %r{/tag/},
@@ -210,17 +222,20 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://www.windnewspaper.com',
           list_urls: [
-            'https://www.windnewspaper.com',
-            'https://www.windnewspaper.com/category/opinions/',
-            'https://www.windnewspaper.com/category/opinion/'
+            'https://www.windnewspaper.com/category/opinions-and-open-forum',
+            'https://www.windnewspaper.com/category/editorial',
+            'https://www.windnewspaper.com'
           ],
           allowed_hosts: ['www.windnewspaper.com', 'windnewspaper.com'],
-          article_url_patterns: [%r{/20\d{2}/}, %r{/opinion}, %r{/open-forum}],
+          article_url_patterns: [%r{/article/opinion}, %r{/article/open-forum}, %r{/article/editorial}],
           exclude_url_patterns: [
+            %r{/category/editorial/?$},
             %r{/category/opinions/?$},
-            %r{/category/opinion/?$}
+            %r{/category/opinion/?$},
+            %r{/category/opinions-and-open-forum/?$}
           ],
           max_articles: 6,
+          candidate_limit: 24,
           retries: 1
         },
         {
@@ -249,7 +264,7 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://www.sandiegouniontribune.com/opinion/',
           allowed_hosts: ['www.sandiegouniontribune.com', 'sandiegouniontribune.com'],
-          article_url_patterns: [%r{/opinion/story/}, %r{/opinion/}],
+          article_url_patterns: [%r{/\d{4}/\d{2}/\d{2}/}, %r{/opinion/}],
           exclude_url_patterns: [
             %r{/opinion/?$},
             %r{/opinion/commentary/?$},
@@ -257,7 +272,11 @@ module CnpaIntake
             %r{/opinion/letters-to-the-editor/?$},
             %r{/opinion/opinion-columnists/?$}
           ],
+          ignore_context_patterns: [%r{widget-trending-stories}i, %r{trending-bar}i],
+          required_context_patterns: [%r{category-opinion}i, %r{type-of-work-opinion}i, %r{category-commentary}i],
+          feed_urls: ['https://www.sandiegouniontribune.com/opinion/feed/'],
           max_articles: 6,
+          min_articles: 3,
           retries: 1,
           headers: {
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
@@ -270,7 +289,16 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://www.ocregister.com/opinion/',
           allowed_hosts: ['www.ocregister.com', 'ocregister.com'],
-          article_url_patterns: [%r{/opinion/}, %r{/20\d{2}/}],
+          article_url_patterns: [%r{/\d{4}/\d{2}/\d{2}/}],
+          exclude_url_patterns: [
+            %r{/opinion/?$},
+            %r{/opinion/editorials/?$},
+            %r{/opinion/opinion-columnists/?$},
+            %r{/opinion/commentary/?$},
+            %r{/opinion/letters-to-the-editor/?$},
+            %r{/opinion/endorsements/?$},
+            %r{/editorial-board/?$}
+          ],
           max_articles: 6,
           retries: 1,
           headers: {
@@ -284,8 +312,13 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://www.vcstar.com/opinion/',
           allowed_hosts: ['www.vcstar.com', 'vcstar.com'],
-          article_url_patterns: [%r{/story/}, %r{/opinion/}],
-          exclude_url_patterns: [%r{/opinion/?$}],
+          article_url_patterns: [%r{/story/opinion/}],
+          exclude_url_patterns: [
+            %r{/opinion/?$},
+            %r{/opinion/editorials/?$},
+            %r{/opinion/letters/?$},
+            %r{/opinion/columnists/?$}
+          ],
           max_articles: 6,
           retries: 1,
           headers: {
@@ -298,10 +331,21 @@ module CnpaIntake
           mode: :page,
           source_type: 'page_monitor',
           list_url: 'https://www.desertsun.com/opinion/',
+          list_urls: [
+            'https://www.desertsun.com/opinion/valley-voice/',
+            'https://www.desertsun.com/opinion/letters/',
+            'https://www.desertsun.com/opinion/'
+          ],
           allowed_hosts: ['www.desertsun.com', 'desertsun.com', 'www.thedesertsun.com'],
-          article_url_patterns: [%r{/story/}, %r{/opinion/}],
-          exclude_url_patterns: [%r{/opinion/?$}],
+          article_url_patterns: [%r{/story/opinion/}],
+          exclude_url_patterns: [
+            %r{/opinion/?$},
+            %r{/opinion/editorials/?$},
+            %r{/opinion/letters/?$},
+            %r{/opinion/valley-voice/?$}
+          ],
           max_articles: 6,
+          candidate_limit: 30,
           retries: 1,
           headers: {
             'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36'
@@ -313,9 +357,19 @@ module CnpaIntake
           mode: :page,
           source_type: 'page_monitor',
           list_url: 'https://www.redding.com/opinion/',
+          list_urls: [
+            'https://www.redding.com/opinion/speak-your-piece/',
+            'https://www.redding.com/opinion/',
+            'https://www.redding.com/opinion/editorials/'
+          ],
           allowed_hosts: ['www.redding.com', 'redding.com'],
-          article_url_patterns: [%r{/story/}, %r{/opinion/}],
-          exclude_url_patterns: [%r{/opinion/?$}],
+          article_url_patterns: [%r{/story/opinion/}],
+          exclude_url_patterns: [
+            %r{/opinion/?$},
+            %r{/opinion/speak-your-piece/?$},
+            %r{/opinion/editorials/?$}
+          ],
+          candidate_limit: 30,
           max_articles: 6,
           retries: 1,
           headers: {
@@ -329,7 +383,14 @@ module CnpaIntake
           source_type: 'page_monitor',
           list_url: 'https://www.uniondemocrat.com/',
           allowed_hosts: ['www.uniondemocrat.com', 'uniondemocrat.com'],
-          article_url_patterns: [%r{/opinion/}, %r{/letters}, %r{/article_}],
+          article_url_patterns: [%r{/opinion/}],
+          exclude_url_patterns: [
+            %r{/users/},
+            %r{/image_[a-f0-9-]+\.html$},
+            %r{/sports/},
+            %r{/lifestyle/}
+          ],
+          disable_feed_fallback: true,
           max_articles: 6,
           retries: 1,
           headers: {
@@ -340,7 +401,7 @@ module CnpaIntake
     end
 
     def fetch(keys = [])
-      return all if keys.nil? || keys.empty?
+      return all.select { |source| source.fetch(:active, true) } if keys.nil? || keys.empty?
 
       wanted = keys.map(&:downcase)
       all.select { |source| wanted.include?(source[:key]) }

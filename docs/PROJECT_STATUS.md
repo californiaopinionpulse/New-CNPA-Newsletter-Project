@@ -10,28 +10,43 @@ It already includes:
 - a curated California publication/source list
 - prototype ingestion tiers and monitoring specs
 - Airtable-oriented CSV outputs
+- a working scraping/intake layer for current opinion content
+- an Airtable-ready article import export
 
 ## What Appears Done
 
 - visual direction for the newsletter prototype
 - initial weekly workflow design
 - first-pass source mapping and output generation
+- Windows Ruby/Git setup
+- cross-platform Ruby build compatibility
+- current-content scraping and Airtable import generation
 
 ## What Is Not Yet Built
 
-- live ingestion
 - automated issue generation
 - production sending workflow
-- a verified Windows run path for the Ruby scripts
+- full source coverage for every targeted publication
+- finalized pause/review policy for weak sources
 
-## Current PC Constraints
+## Current Working State
 
-On this machine:
+Current baseline:
 
-- `git` is not available in PowerShell
-- `ruby` is not available in PowerShell
-- a file-reorganization attempt was blocked by OneDrive permissions
+- `git` works in PowerShell
+- `ruby` works in PowerShell
+- the build pipeline runs locally
+- the scraper runs locally
+- the Airtable article import builds locally
+- the active source set is cross-platform oriented
+
+Recent scraper baseline:
+
+- 19 active sources
+- current-content intake constrained to the previous 4 weeks
+- unknown publish dates reduced to 0 in the current Airtable import
+- paused/blocked candidates can be excluded from default runs while remaining in source config for later review
 
 ## Next Step
 
-Install `git` and `ruby`, then rerun the CSV-generation scripts locally so the project can continue cleanly on Windows.
+Clean up and commit the current Windows-side interoperability changes, then mirror this repo state onto the MacBook via GitHub.

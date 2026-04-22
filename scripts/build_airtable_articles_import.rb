@@ -115,6 +115,14 @@ def iso_issue_week(published_date, fallback_time)
   format('%<year>d-W%<week>02d', year: year, week: week)
 end
 
+def parsed_published_time(value)
+  return nil if value.to_s.strip.empty?
+
+  Time.parse(value.to_s).utc
+rescue ArgumentError
+  nil
+end
+
 input_path = File.expand_path('../data/generated/content_intake/latest_content_intake.json', __dir__)
 publication_path = File.expand_path('../airtable_publications_prototype_import.csv', __dir__)
 output_path = File.expand_path('../data/generated/content_intake/airtable_articles_import.csv', __dir__)
@@ -124,6 +132,9 @@ payload = load_json(input_path)
 publication_metadata = load_publication_metadata(publication_path)
 headers = CSV.read(template_path, headers: true).headers
 generated_at = Time.parse(payload['generated_at'].to_s)
+lookback_days = payload['lookback_days'].to_i
+lookback_days = 28 if lookback_days <= 0
+cutoff_time = generated_at - (lookback_days * 86_400)
 seen_urls = Set.new
 
 rows = payload.fetch('articles', []).filter_map do |article|
@@ -132,6 +143,14 @@ rows = payload.fetch('articles', []).filter_map do |article|
   next if seen_urls.include?(article_url)
 
   seen_urls << article_url
+  published_at = parsed_published_time(article['published_date'])
+  date_status = clean_text(article['date_status'])
+
+  if published_at
+    next if published_at < cutoff_time
+    next if published_at > (generated_at + 86_400)
+  end
+
   publication = clean_text(article['publication'])
   metadata = publication_metadata.fetch(publication, {})
   raw_excerpt = normalize_text(article['raw_excerpt']).gsub(/\ACollector error:\s*/i, '')
@@ -143,6 +162,8 @@ rows = payload.fetch('articles', []).filter_map do |article|
   status =
     if raw_excerpt.match?(/forbidden|timeout|collector error/i)
       'Needs source review'
+    elsif published_at.nil? || date_status == 'unknown'
+      'Unknown publish date'
     else
       'Ready for review'
     end
@@ -151,7 +172,8 @@ rows = payload.fetch('articles', []).filter_map do |article|
     metadata[:notes],
     "source_key=#{clean_text(article['source_key'])}",
     "collector_mode=#{clean_text(article['collector_mode'])}",
-    "collected_at=#{clean_text(article['collected_at'])}"
+    "collected_at=#{clean_text(article['collected_at'])}",
+    ("publish_date=missing_or_unparseable" if published_at.nil? || date_status == 'unknown')
   ].compact.map { |value| clean_text(value) }.reject(&:empty?).join(' | ')
 
   {
@@ -159,7 +181,7 @@ rows = payload.fetch('articles', []).filter_map do |article|
     'Publication' => publication,
     'Article URL' => article_url,
     'Author' => clean_text(article['author']),
-    'Published Date' => clean_text(article['published_date']).slice(0, 10),
+    'Published Date' => published_at ? published_at.strftime('%Y-%m-%d') : '',
     'Source URL' => clean_text(metadata[:opinion_source_url]).empty? ? clean_text(article['source_url']) : clean_text(metadata[:opinion_source_url]),
     'Source Type' => clean_text(metadata[:source_type]).empty? ? clean_text(article['source_type']) : clean_text(metadata[:source_type]),
     'Region' => region,
@@ -167,7 +189,7 @@ rows = payload.fetch('articles', []).filter_map do |article|
     'AI Summary' => ai_summary,
     'Topic Tag' => topic_tag,
     'Candidate' => status == 'Ready for review' ? 'Yes' : 'No',
-    'Issue Week' => iso_issue_week(article['published_date'], generated_at),
+    'Issue Week' => published_at ? iso_issue_week(article['published_date'], generated_at) : '',
     'Status' => status,
     'Notes' => notes
   }

@@ -1,3 +1,4 @@
 ~$*.xlsx
 .DS_Store
 Thumbs.db
+data/generated/content_intake/content_intake_*.json
